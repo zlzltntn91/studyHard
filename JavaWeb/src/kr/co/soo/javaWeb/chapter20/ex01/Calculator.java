@@ -1,6 +1,0 @@
-package kr.co.soo.javaWeb.chapter20.ex01;
-
-public class Calculator {
-    public static class CalTest {
-    }
-}

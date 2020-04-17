@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+<!--    id가 simpleUrlController인 빈을 생성 함 -->
+    <bean id="simpleUrlController" class="javaWeb.chapter21.ex01.SimpleUrlController"/>
+
+    <bean id="urlHandlerMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+<!--        /test/index.do 로 요청시 simpleUrlController를 호출하도록 매핑-->
+        <property name="mappings">
+            <props>
+                <prop key="/test/index.do">simpleUrlController</prop>
+            </props>
+        </property>
+    </bean>
+
+<!--    컨트롤러에서 ModelAndView의 인자로 뷰이름이 반환되면 InternalResourceViewResolver의 프로퍼티로 prefix 속성에 지정된 /test 폴더에서 ModelAndView의 인자로 넘어온 뷰이름에 해당하는 JSP를 선택해 -->
+<!--    DispathcerServlet으로 보냄-->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/test/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+<!--    URL 요청이 /test/*.do 면 userController를 요청함 -->
+    <bean id="userUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+        <property name="mappings">
+            <props>
+                <prop key="/test/*.do">userController</prop>
+            </props>
+        </property>
+    </bean>
+
+<!--    methodNameResolver 프로퍼티에 userMethodNameResolver를 주입해서 지정한 요청명에 대해 직접 메서드를 호출함-->
+    <bean id="userController" class="javaWeb.chapter21.ex02.UserController">
+        <property name="methodNameResolver">
+<!--            <ref local="userMethodNameResolver"></ref>-->
+            <ref bean="userMethodNameResolver"/>
+        </property>
+    </bean>
+<!--    login Method를 호출함 -->
+    <bean id="userMethodNameResolver" class="org.springframework.web.servlet.mvc.multiaction.PropertiesMethodNameResolver">
+        <property name="mappings">
+            <props>
+                <prop key="/test/login.do">login</prop>
+            </props>
+        </property>
+    </bean>
+
+</beans>

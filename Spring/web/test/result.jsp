@@ -11,6 +11,8 @@
     <title>결과페이지</title>
 </head>
 <body>
-
+    ${id}
+    ${pw}
+    ${id_pw}
 </body>
 </html>

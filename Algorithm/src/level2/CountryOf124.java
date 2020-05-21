@@ -7,6 +7,7 @@ public class CountryOf124 {
 
     static String answer = "";
 
+    //MySolution
     public static String solution(int n) {
         int[] Co1 = {1, 2, 4};
         int quotient = n / 3;
@@ -25,6 +26,7 @@ public class CountryOf124 {
         return answer;
     }
 
+    // BestSolution
     public static String solution2(int n) {
         String[] num = {"4", "1", "2"};
         String answer = "";
@@ -38,8 +40,8 @@ public class CountryOf124 {
 
 
     public static void main(String[] args) {
-        System.out.println(solution(14));
-        System.out.println(solution2(14));
+        System.out.println(solution(2304));
+        System.out.println(solution2(2304));
     }
 
 }

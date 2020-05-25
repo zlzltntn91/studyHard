@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+<!--    Setter를 이용한 DI기능-->
+    <bean class="javaWeb.chapter19.ex02.PersonServiceImpl" id="PersonService" name="personService">
+        <property name="name">
+            <value>김은수</value>
+        </property>
+    </bean>
+<!--    생성자를 통한 DI 기능-->
+    <bean class="javaWeb.chapter19.ex02.PersonServiceImpl" id="PersonService1" name="personService1">
+        <constructor-arg value="손흥민" name="name"></constructor-arg>
+        <constructor-arg value="27" type="int" name="age"></constructor-arg>
+        <constructor-arg value="102234425" type="long" name="value"></constructor-arg>
+    </bean>
+<!--    <bean class="javaWeb.chapter19.ex01.PersonServiceImpl" id="PersonService" name="personService">-->
+<!--    <property name="name">-->
+<!--        <value>김은수</value>-->
+<!--    </property>-->
+<!--</bean>-->
+</beans>

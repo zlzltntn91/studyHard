@@ -1,6 +1,6 @@
 package level1;
 
-public class MiddleChar {
+public class MiddleChar_OK {
     public String solution(String s) {
         char[] sList = s.toCharArray();
         int middleIndex = sList.length / 2;
@@ -15,7 +15,7 @@ public class MiddleChar {
     }
 
     public static void main(String[] args) {
-        MiddleChar mc = new MiddleChar();
+        MiddleChar_OK mc = new MiddleChar_OK();
         String s = "abcdefg";
         mc.solution(s);
     }

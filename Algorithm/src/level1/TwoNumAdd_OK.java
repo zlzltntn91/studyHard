@@ -1,6 +1,6 @@
 package level1;
 
-public class TwoNumAdd {
+public class TwoNumAdd_OK {
     public long solution(int a, int b) {
         long answer = 0;
 
@@ -15,7 +15,7 @@ public class TwoNumAdd {
     }
 
     public static void main (String[] args) {
-        TwoNumAdd tna = new TwoNumAdd();
+        TwoNumAdd_OK tna = new TwoNumAdd_OK();
         int a, b;
         a = 3;
         b = 5;

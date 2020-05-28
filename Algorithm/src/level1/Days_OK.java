@@ -1,7 +1,8 @@
 package level1;
 
-public class Days {
+public class Days_OK {
     public String solution(int a, int b) {
+
         // 4로 나눠 떨어지면 윤년
         // 4, 100 으로 나누어 떨어지면 평년
         // 4, 100, 400으로 나누어 떨어지면 윤년
@@ -30,7 +31,7 @@ public class Days {
     }
 
     public static void main(String[] args) {
-        Days d = new Days();
+        Days_OK d = new Days_OK();
         d.solution(1, 25);
 
     }

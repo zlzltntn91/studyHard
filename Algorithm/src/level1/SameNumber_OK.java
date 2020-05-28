@@ -1,9 +1,8 @@
 package level1;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class SameNumber {
+public class SameNumber_OK {
     public int [] solution(int []arr) {
         ArrayList <Integer> answer = new ArrayList<>();
 
@@ -21,7 +20,7 @@ public class SameNumber {
     }
 
     public static void main (String[] args) {
-        SameNumber sm = new SameNumber();
+        SameNumber_OK sm = new SameNumber_OK();
         int [] arr1 = {1,1,3,3,0,1,1};
         int [] arr2 = {4,4,4,3,3,3,1};
         sm.solution(arr2);

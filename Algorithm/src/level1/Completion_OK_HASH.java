@@ -11,7 +11,7 @@ public class Completion_OK_HASH {
             p.put(player, p.getOrDefault(player, -1) -1);
         }
         for(String player : completion){
-            p.put(player, p.get(player) + 1 );
+            p.put(player,  p.get(player) + 1 );
         }
         for(String t : p.keySet()){
             if(p.get(t) == -2){

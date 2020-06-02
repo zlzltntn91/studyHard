@@ -1,9 +1,7 @@
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+package javaTest;
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +21,7 @@ public class BeanMaker {
         // array -> list
         List<String> al = Arrays.asList(test);
         // list -> arrayList
-        ArrayList<String> tl = new ArrayList<>(al);
+        ArrayList<String> tl = new ArrayList<String>(al);
 
         int objCount = 0;
         // 공통된 문자열이 있으면 지움

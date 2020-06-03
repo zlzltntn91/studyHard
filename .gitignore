@@ -1,2 +1,3 @@
 # Project exclude paths
 /Spring/web/WEB-INF/classes/
+/**/target

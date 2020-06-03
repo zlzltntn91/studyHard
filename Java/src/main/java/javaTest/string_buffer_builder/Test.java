@@ -34,14 +34,13 @@ public class Test {
 
     public static void main (String[] args) {
         Test t = new Test();
-
         long startTime2 = System.currentTimeMillis();
         t.builderTest();
         long endTime2 = System.currentTimeMillis();
         System.out.println((endTime2 - startTime2)*0.001 + " StringBuilder Test");
 
         long startTime3 = System.currentTimeMillis();
-        t.builderTest();
+        t.bufferTest();
         long endTime3 = System.currentTimeMillis();
         System.out.println((endTime3 - startTime3)*0.001 + " StringBuffer Test");
 

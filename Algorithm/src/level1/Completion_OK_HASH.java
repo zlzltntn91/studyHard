@@ -6,7 +6,7 @@ public class Completion_OK_HASH {
 
     public String solution (String[] participant, String[] completion) {
         String answer = "";
-        Map <String, Integer> p = new HashMap();
+        Map <String, Integer> p = new HashMap<>();
         for(String player : participant){
             p.put(player, p.getOrDefault(player, -1) -1);
         }

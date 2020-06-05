@@ -3,7 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,intellij,eclipse,java
 Java/**.iml
 Algorithm/**.iml
-.idea/**.**
+.idea/**.xml
 ### Eclipse ###
 .metadata
 bin/

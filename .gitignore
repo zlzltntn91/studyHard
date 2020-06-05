@@ -1,8 +1,9 @@
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,intellij,eclipse,java
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,intellij,eclipse,java
-Java/studyHard.iml
-.idea/**
+Java/**.iml
+Algorithm/**.iml
+.idea/**.**
 ### Eclipse ###
 .metadata
 bin/

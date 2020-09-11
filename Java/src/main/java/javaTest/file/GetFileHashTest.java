@@ -1,4 +1,4 @@
-package thirdParyTest;
+package javaTest.file;
 
 import org.junit.Test;
 

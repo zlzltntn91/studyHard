@@ -1,11 +1,6 @@
-package javaTest.lambda;
+package javaTest.java8.lambda;
 
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.PrimitiveIterator;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 public class LambdaBasic {
 

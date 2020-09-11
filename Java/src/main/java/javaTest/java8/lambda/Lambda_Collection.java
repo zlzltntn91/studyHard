@@ -1,4 +1,4 @@
-package javaTest.lambda;
+package javaTest.java8.lambda;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -75,9 +75,9 @@ public class Lambda_Collection {
     // present 현재, 참석, 존재하는
 
     // compute
-    map.compute("십이", (k, v) -> "있으면 변경, 없으면 추가");
+    map.compute("십이", (k, v) -> k + "있으면 변경, 없으면 추가");
     // computeIfAbsent
-    map.computeIfAbsent("십일", (s) -> "없으니까 추가");
+    map.computeIfAbsent("십일", (s) -> s + "없으니까 추가");
     // computeIfPresent
     map.computeIfPresent("이", (k, v) -> "있으니까 변경");
 
@@ -91,7 +91,7 @@ public class Lambda_Collection {
     map2.put("이", "니");
 
     map.merge("널인거", "널이라서 이걸 준비했어", (oldValue, newValue) -> newValue);
-    map.merge("일", "넌 널이 아니잖아?", (oldValue, newValue) -> oldValue);
+    map.merge("일", "넌 널이 아니잖아?", (oldValue, newValue) -> newValue);
     map.forEach((k, v) -> System.out.println(k + ":" + v));
   }
 

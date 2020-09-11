@@ -1,6 +1,5 @@
-package javaTest.lambda;
+package javaTest.java8.lambda;
 
-import java.util.Collections;
 import java.util.Comparator;
 
 public class LambdaComparator {

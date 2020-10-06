@@ -27,7 +27,7 @@ public class MockTest {
     MockObj nullObj;
 
     @Test
-    public void mockTest(){
+    public void mockTest() {
 
         assertNotNull(mockObj);
         assertThat(nullObj, nullValue());

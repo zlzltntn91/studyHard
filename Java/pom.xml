@@ -15,7 +15,6 @@
         <jsonSimple.version>1.1.1</jsonSimple.version>
         <guava.version>29.0-jre</guava.version>
         <apacheCommons.version>2.4</apacheCommons.version>
-
         <lombok.version>1.18.4</lombok.version>
         <slf4j.version>1.7.30</slf4j.version>
         <log4j.version>2.11.0</log4j.version>

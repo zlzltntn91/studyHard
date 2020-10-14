@@ -1,6 +1,7 @@
 package makeSoo;
 
 import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.NodeList;
@@ -13,107 +14,162 @@ import javax.imageio.metadata.IIOMetadataNode;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 
+@Slf4j
 public class ImageMaker {
 
-  @Test
-  @Ignore
-  public void getPath() {
-    File f = new File(".");
-    System.out.println(f.getAbsolutePath());
-    String imgDir = "C:/Users/dgtazm9513/local-git/studyHard/Java/images/";
-    File f2 = new File(imgDir + "졸업증명서.png");
-    System.out.println(f2.getAbsolutePath());
-    System.out.println(f2.exists());
+  public static void main (String[] args) {
+    ImageMaker mm = new ImageMaker();
+    LocalDateTime ldt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+    mm.make(ldt, "18", "한글테스트하", "222222", true);
+    mm.make(ldt, "18", "한글테스트하", "222222", false);
+    GraphicsEnvironment e = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    Font[] fonts = e.getAllFonts();
+    for (Font font : fonts) {
+      System.out.println(font.getFontName());
+    }
   }
 
-  @Test
-  @Ignore
-  public void metaInsertAndSelect() {
-    String imgDir = "C:/Users/dgtazm9513/local-git/studyHard/Java/images/";
-    File f2 = new File(imgDir + "졸업증명서.png");
-  }
+  public String make (LocalDateTime ldt, String docType, String previewText, String minno, boolean pass){
+    previewText = new String(previewText.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
 
-  /**
-   * PNG 파일에 메타데이터 삽입
-   *
-   * @param metadata
-   * @param key
-   * @param value
-   * @throws IIOInvalidTreeException
-   */
-  public void addTextEntry(IIOMetadata metadata, String key, String value) throws IIOInvalidTreeException {
-    IIOMetadataNode textEntry = new IIOMetadataNode("TextEntry");
-    textEntry.setAttribute("keyword", key);
-    textEntry.setAttribute("value", value);
+    log.info("마크메이커 : {}", previewText);
 
-    IIOMetadataNode text = new IIOMetadataNode("Text");
-    text.appendChild(textEntry);
+    BufferedImage image = null;
+    String backgroundImgDir = "";
+    log.info(backgroundImgDir);
+    int imgWidth = 0;
 
-    IIOMetadataNode root = new IIOMetadataNode(IIOMetadataFormatImpl.standardMetadataFormatName);
-    root.appendChild(text);
-
-    metadata.mergeTree(IIOMetadataFormatImpl.standardMetadataFormatName, root);
-  }
-
-  /**
-   * PNG 파일에 메타데이터 조회
-   *
-   * @param metadata
-   * @param key
-   * @return
-   */
-  public String getTextEntry(IIOMetadata metadata, String key) {
-    IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree(IIOMetadataFormatImpl.standardMetadataFormatName);
-    NodeList entries = root.getElementsByTagName("TextEntry");
-
-    for (int i = 0; i < entries.getLength(); i++) {
-      IIOMetadataNode node = (IIOMetadataNode) entries.item(i);
-      if (node.getAttribute("keyword").equals(key)) {
-        return node.getAttribute("value");
+    try {
+      // FIXME 증명서명 분기
+      try {
+        if (pass) {
+          if (Integer.parseInt(docType) == 18) {
+            image = ImageIO.read(new File(backgroundImgDir, "/졸업증명서.png"));
+          } else if (Integer.parseInt(docType) == 8) {
+            image = ImageIO.read(new File(backgroundImgDir + "/성적증명서.png"));
+          } else {
+            image = ImageIO.read(new File(backgroundImgDir + "/업로드문서.png"));
+          }
+        } else {
+          if (Integer.parseInt(docType) == 18) {
+            image = ImageIO.read(new File(backgroundImgDir, "/졸업증명서_PASS.png"));
+          } else if (Integer.parseInt(docType) == 8) {
+            image = ImageIO.read(new File(backgroundImgDir + "/성적증명서_PASS.png"));
+          } else {
+            image = ImageIO.read(new File(backgroundImgDir + "/업로드문서_PASS.png"));
+          }
+        }
+      } catch (NumberFormatException e) {
+        if (pass) {
+          if (docType.equals("U")) {
+            image = ImageIO.read(new File(backgroundImgDir + "/업로드문서.png"));
+          }
+        } else {
+          image = ImageIO.read(new File(backgroundImgDir + "/업로드문서_PASS.png"));
+        }
       }
+      imgWidth = image.getWidth();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
-    return null;
+    DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    DateTimeFormatter hms = DateTimeFormatter.ofPattern("HH:mm:ss");
+    DateTimeFormatter btsa = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    log.debug("#### TimeZone : {}", ldt);
+    String strYMD = ymd.format(ldt);
+    String strHMS = hms.format(ldt);
+    String serilaCode = makeSerialCode(btsa.format(ldt), minno);
+    assert image != null;
+    Graphics g = image.getGraphics();
+    FontMetrics metrics = null;
+    ArrayList<String> giwanNeList = new ArrayList<>();
+    g.setColor(Color.BLACK);
+    /*
+     * 한줄에 출력할 수 있는지 없는지 구분 의도한 디자인대로 출력할 수 있는 조건 = 글자수
+     * 최대 18자리
+     */
+    int maxCharCount = 9;
+    int tempCount = 0;
+    int giwanNeWidth = 0;
+    int[] lineHeight = {215, 255, 295};
+    // 33 / 9.0
+    int getLine = (int) Math.ceil(previewText.length() / (float) maxCharCount);
+    if (getLine != 1) {
+      // 2줄 이상
+      g.setFont(new Font("NanumGothic", Font.PLAIN, 32));
+      metrics = g.getFontMetrics();
+
+      for (int i = 0; i <= 1; i++) { // 두줄만하자..
+        giwanNeList.add(new String(previewText.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8).substring(tempCount, maxCharCount));
+        tempCount = maxCharCount; // 9
+        maxCharCount = i == 0 ? maxCharCount * 2 : previewText.length(); // 18
+        // //giwanNe.length();
+        if (i == 1) {
+          giwanNeWidth = metrics.stringWidth(giwanNeList.get(i) + "...");
+          g.drawString(giwanNeList.get(i) + "...", (imgWidth - giwanNeWidth) / 2, lineHeight[i]); // 학교명
+        } else {
+          giwanNeWidth = metrics.stringWidth(giwanNeList.get(i));
+          g.drawString(giwanNeList.get(i), (imgWidth - giwanNeWidth) / 2, lineHeight[i]); // 학교명
+        }
+      }
+    } else {
+      // 1줄
+      g.setFont(new Font("NanumGothic", Font.PLAIN, 40));
+      metrics = g.getFontMetrics();
+      giwanNeWidth = metrics.stringWidth(new String(previewText.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
+      g.drawString(previewText, (imgWidth - giwanNeWidth) / 2, 240); // 학교명
+    }
+
+    // 삽입 폰트 기본 세팅
+    g.setFont(new Font("NanumGothic", Font.PLAIN, 37));
+    metrics = g.getFontMetrics();
+    // FIXME uniqueCode
+    // X 는 (이미지사이즈 - 문자열넓이) / 2
+    // Y 는 이미지 사이즈가 600x600으로 가정하여 FIXME 하드코딩
+    int serialCodeWidth = metrics.stringWidth(serilaCode);
+    g.drawString(serilaCode, (imgWidth - serialCodeWidth) / 2, 315); // 유니크코드
+    int ymdWidth = metrics.stringWidth(strYMD);
+    g.drawString(strYMD, (imgWidth - ymdWidth) / 2, 375); // 년월일
+    int hmsWidth = metrics.stringWidth(strHMS);
+    g.drawString(strHMS, (imgWidth - hmsWidth) / 2, 415); // 시분초
+    int kstWidth = metrics.stringWidth("KST");
+    g.drawString("KST", (imgWidth - kstWidth) / 2, 455); // KST
+
+    String markPath = "";
+    File markDir = new File(markPath);
+    File markFile;
+    if (pass) {
+      markFile = new File(markDir.getPath(), minno + ".png");
+    } else {
+      markFile = new File(markDir.getPath(), minno + "_PASS" + ".png");
+    }
+    try {
+      if (markDir.exists() == false) markDir.mkdirs();
+      ImageIO.write(image, "png", markFile);
+      g.dispose();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return "" + "/" + markFile.getName();
   }
 
-  @Test
-  public void getTime() throws ParseException {
-    Date d = new Date();
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-    String t = sdf.format(d);
-    System.out.println(t);
-  }
-
-  @Test
-  public void T() {
-
-    JsonObject jObject = new JsonObject();
-    JsonObject jObj2 = new JsonObject();
-
-    Date d = new Date();
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-
-    // 증명서 마크 생성
-    String giwanNe = "일이삼사오육칠팔구십일이삼사오육칠팔구십";
-    String minno = "M987654321";
-    String docType = "졸업증명서";
-    String timeStamp = sdf.format(d);
-
-    System.out.println("timeStamp : " + timeStamp);
-
+  public String makeSerialCode (String timeStamp, String minno) {
     String BTSA = timeStamp.substring(2, timeStamp.length() - 4);
-    String MINNO = minno.substring(minno.length() - 4, minno.length()).toUpperCase();
+    String MINNO = minno.substring(minno.length() - 4).toUpperCase();
     String serialCode = BTSA + MINNO;
 
-    System.out.println("serialCode : " + serialCode);
-
     // 문자열 반대로 출력하는 소스
-    ArrayList<String> serialCodeList = new ArrayList<>(); // ["0191", "1071", "RBSF"]
+    ArrayList<String> serialCodeList = new ArrayList<>();
 
     int digits = 4; // 문자열 커팅에 사용되는 변수 (자릿수)
     String temp = ""; // digits 수만큼 문자열 저장
@@ -136,9 +192,7 @@ public class ImageMaker {
     int hex = 0;
     String str = "";
     String strSerialCode = "";
-    for (
-      int i = 0;
-      i <= serialCodeList.size() - 1; i++) {
+    for (int i = 0; i <= serialCodeList.size() - 1; i++) {
       strSerialCode = "";
       try {
         hex = Integer.parseInt(serialCodeList.get(i));
@@ -156,145 +210,7 @@ public class ImageMaker {
         str += serialCodeList.get(i);
       }
     }
-
     str = str.toUpperCase();
-
-    // 증명서 종류별 이미지 객체 생성
-    BufferedImage image = null;
-//    String classPath = "";
-//    String projectPath = classPath.substring(0, classPath.lastIndexOf("WEB-INF"));
-
-    String imgDir = "C:/Users/dgtazm9513/local-git/studyHard/Java/images/";
-    String dir = imgDir;
-    // image = ImageIO.read(new
-    // File(dir+"졸업_한(600).png"));
-    int imgWidth = 0;
-    int imgHeight = 0;
-
-    try {
-      if (docType.contains("졸업증명서")) {
-        image = ImageIO.read(new File(dir + "졸업증명서.png"));
-      } else if (docType.contains("성적증명서")) {
-        image = ImageIO.read(new File(dir + "성적증명서.png"));
-      } else if (docType.contains("교육비납입증명서")) {
-        image = ImageIO.read(new File(dir + "교육비납입증명서.png"));
-      } else if (docType.contains("수료증명서")) {
-        image = ImageIO.read(new File(dir + "수료증명서.png"));
-      } else if (docType.contains("재학증명서")) {
-        image = ImageIO.read(new File(dir + "재학증명서.png"));
-      }
-      if (image != null) {
-        imgWidth = image.getWidth();
-        imgHeight = image.getHeight();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-//      jObject.put("resultCode", "6303");
-//      jObject.put("resultMsg", "증명서 마크 파일 읽기에 실패했습니다.");
-//      System.out.println("");
-//      response.getWriter().write(jObject.toJSONString());
-//      return;
-    }
-
-    // String -> Date
-    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddhhmmss");
-    Date date = null;
-    try {
-      date = format.parse(timeStamp);
-    } catch (ParseException e) {
-      e.printStackTrace();
-    }
-
-    // Date -> ymd, hms
-    SimpleDateFormat ymd = new SimpleDateFormat("yyyy/MM/dd");
-    SimpleDateFormat hms = new SimpleDateFormat("HH:mm:ss");
-    String strYMD = ymd.format(date);
-    String strHMS = hms.format(date);
-
-    Graphics g = image.getGraphics();
-    FontMetrics metrics = null;
-    ArrayList<String> giwanNeList = new ArrayList<>();
-    g.setColor(Color.BLACK);
-
-    /*
-     * 한줄에 출력할 수 있는지 없는지 구분 의도한 디자인대로 출력할 수 있는 조건 = 글자수
-     * 최대 18자리
-     */
-    int maxCharCount = 9;
-    int tempCount = 0;
-    int giwanNeWidth = 0;
-    int lineHeight[] = {220, 260, 300};
-    int getLine = (int) Math.ceil(giwanNe.length() / (float) maxCharCount);
-    if (getLine != 1) {
-      // 2줄 이상
-      g.setFont(new Font("나눔스퀘어 Bold", Font.PLAIN, 32));
-      metrics = g.getFontMetrics();
-      getLine = getLine >= 3 ? 3 : getLine;
-      for (int i = 0; i <= getLine - 1; i++) {
-        giwanNeList.add(giwanNe.substring(tempCount, maxCharCount));
-        tempCount = maxCharCount; // 9
-        maxCharCount = i == 0 ? maxCharCount * 2 : giwanNe.length(); // 18
-        // //giwanNe.length();
-        giwanNeWidth = metrics.stringWidth(giwanNeList.get(i));
-        g.drawString(giwanNeList.get(i), (imgWidth - giwanNeWidth) / 2, lineHeight[i]); // 학교명
-      }
-    } else {
-      // 1줄
-      g.setFont(new Font("나눔스퀘어 Bold", Font.PLAIN, 40));
-      metrics = g.getFontMetrics();
-      giwanNeWidth = metrics.stringWidth(giwanNe);
-      g.drawString(giwanNe, (imgWidth - giwanNeWidth) / 2, 240); // 학교명
-    }
-
-    // 삽입 폰트 기본 세팅
-    g.setFont(new Font("나눔스퀘어 Bold", Font.PLAIN, 37));
-    metrics = g.getFontMetrics();
-
-    int serialCodeWidth = metrics.stringWidth(str);
-    g.drawString(str, (imgWidth - serialCodeWidth) / 2, 320); // 유니크코드
-
-    int ymdWidth = metrics.stringWidth(strYMD);
-    g.drawString(strYMD, (imgWidth - ymdWidth) / 2, 380); // 년월일
-
-    int hmsWidth = metrics.stringWidth(strHMS);
-    g.drawString(strHMS, (imgWidth - hmsWidth) / 2, 420); // 시분초
-
-    int kstWidth = metrics.stringWidth("KST");
-    g.drawString("KST", (imgWidth - kstWidth) / 2, 460); // KST
-
-    g.dispose();
-
-    File f = new File(dir + "/mark");
-    String savePath = "";
-    try {
-      // 폴더 생성
-      if (!f.exists()) {
-        f.mkdir();
-      }
-      savePath = f.getPath();
-      // 파일 저장
-      // f = new File(savePath +"/" +str.replace(" ",
-      // "")+".png");
-      f = new File(savePath + "/" + minno + ".png");
-      ImageIO.write(image, "png", f);
-
-    } catch (
-      Exception e) {
-//      jObj2.put("serial", "-1");
-//      jObj2.put("resultCode", "6304");
-//      jObj2.put("resultMsg", "증명서 마크 생성에 실패했습니다.");
-    }
-
-//    jObj2.put("serial", str.replace(" ", ""));
-//    jObj2.put("resultCode", "200");
-//    jObj2.put("dir", "/wm1.0/images/scoutImages/mark/" + minno + ".png");
-//
-//    jObject.put("certMark", jObj2);
-//    jObject.put("resultCode", "200");
-//    jObject.put("resultMsg", "");
-//    jObject.put("certAddr","http://scout.doculink.kr/MinwonScout.do?CMD=CERT_PRINT&GBN=SCT&GNO=" + sGiwanNo+ "&CERTNO=" + sMinNo);
-//    jObject.put("downAddr","http://scout.doculink.kr/MinwonScout.do?CMD=CERT_DOWN&GBN=SCT&GNO=" + sGiwanNo+ "&CERTNO=" + sMinNo);
-//    String jsonInfo = jObject.toJSONString();
-//    response.getWriter().write(jsonInfo);
+    return str;
   }
 }

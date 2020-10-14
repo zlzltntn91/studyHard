@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.dzone.attachAdmin.user.mapper.UserMapper">
+
+	<select id="selectUserBy_id" resultType="UserVO" parameterType="UserVO">
+		SELECT * 
+		FROM 
+			manager_in 
+		WHERE 
+			manager_id = #{manager_id} 
+	</select>
+	
+	<select id="selectUserBy_cid" resultType="UserVO" parameterType="UserVO">
+		SELECT * 
+		FROM 
+			manager_in 
+		WHERE 
+			content_id = #{content_id} 	
+	</select>
+	
+	<select id="selectUserBy_cid_cd" resultType="UserVO" parameterType="UserVO">
+		SELECT * 
+		FROM 
+			manager_in 
+		WHERE 
+			content_id = #{content_id} 	
+		AND 
+			manager_cd = #{manager_cd}
+	</select>
+	
+	<select id="selectUserBy_id_pw" resultType="UserVO" parameterType="UserVO">
+		SELECT *
+		FROM 
+			manager_in 
+		WHERE 
+			manager_id = #{manager_id} 
+		AND manager_pw = #{manager_pw}
+	</select>
+	
+	<update id="updateUser" parameterType="UserVO">
+		UPDATE manager_in 
+		SET
+		<if test="manager_pw != null and manager_pw != ''">
+			manager_pw = #{manager_pw},
+		</if>
+		<if test="manager_ne != null and manager_ne != ''">
+			manager_ne = #{manager_ne},
+		</if>
+		<if test="manager_fax != null and manager_fax != ''">
+			manager_fax = #{manager_fax}, 
+		</if>
+		<if test="manager_tel != null and manager_tel != ''">
+			manager_tel = #{manager_tel}, 
+		</if>
+		<if test="manager_mail != null and manager_mail != ''">
+			manager_mail = #{manager_mail}
+		</if>
+		WHERE 
+			manager_id = #{manager_id}		
+	</update>
+	
+	<insert id="insertUser" parameterType="UserVO">
+		INSERT INTO
+				manager_in
+		VALUES 
+				(
+				#{manager_id}, 
+				#{manager_pw}, 
+				#{manager_giwan}, 
+				#{content_id}, 
+				#{content_id2}, 
+				#{manager_cd}, 
+				#{manager_ne}, 
+				#{manager_tel},
+				#{manager_fax},
+				#{manager_mail}
+			   	)
+	</insert>
+	
+	<delete id="deleteUser" parameterType="UserVO">
+		DELETE
+		FROM 
+			manager_in
+		WHERE
+			manager_id = #{manager_id}
+		AND 
+			manager_pw = #{manager_pw}
+	</delete>
+	
+</mapper>

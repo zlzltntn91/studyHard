@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<typeAliases>
+		<typeAlias alias="UserVO" type="kr.co.dzone.attachAdmin.user.vo.UserVO" />
+		<typeAlias alias="CareerVO" type="kr.co.dzone.attachAdmin.career.vo.CareerVO"/>
+		<typeAlias alias="CareerSettingVO" type="kr.co.dzone.attachAdmin.career.vo.CareerSettingVO"/>
+		<typeAlias alias="HistoryVO" type="kr.co.dzone.attachAdmin.edu.vo.HistoryVO"/>
+		<typeAlias alias="GstatisticsVO" type="kr.co.dzone.attachAdmin.edu.vo.GstatisticsVO" />
+		<typeAlias alias="StatisticsVO" type="kr.co.dzone.attachAdmin.edu.vo.StatisticsVO" />
+	</typeAliases>
+</configuration>

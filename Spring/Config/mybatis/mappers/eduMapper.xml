@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.dzone.attachAdmin.edu.mapper.EduMapper">
+
+	<!-- 공통 where 조건 -->
+	<sql id="commonWhere">
+			WHERE 	a.min_no = b.min_no
+			AND 	a.min_no = c.min_no
+			AND 	c.receive_type = 'WEB'
+			AND 	a.content_id = #{contentId}
+			AND 	SUBSTRING(a.reg_date, 1, 8) BETWEEN #{date1} AND #{date2}
+			AND 	a.pay_state_cd = '1'
+			AND 	a.user_jumin not like ''
+			AND 	a.user_ne not like ''
+		<if test="managerCd != null and managerCd != 00">
+			AND a.area_cd = #{managerCd}
+		</if>
+	</sql>
+	<!-- 정렬 -->
+	<sql id="sort">
+		<choose>
+			<when test="nameSort != null and nameSort != ''">
+				<choose>
+					<when test="nameSort == 'asc'">
+						ORDER BY a.user_ne ASC
+					</when>
+					<when test="nameSort == 'desc'">
+						ORDER BY a.user_ne DESC
+					</when>
+				</choose>
+			</when>
+			<when test="codeSort != null and codeSort != ''">
+				<choose>
+					<when test="codeSort == 'asc'">
+						ORDER BY a.user_sno ASC
+					</when>
+					<when test="codeSort == 'desc'">
+						ORDER BY a.user_sno DESC
+					</when>
+				</choose>
+			</when>
+			<otherwise>
+						ORDER BY A.REG_DATE asc
+			</otherwise>
+		</choose>
+	</sql>
+	<!-- 검색 조건 -->
+	<sql id="searchQuery">
+		<!-- 10005 (한국방송통신전파진흥원) -->
+		<choose>
+			<when test="contentId == 10005">
+				<if test="kcaYear != null and kcaYear != ''">
+					AND SUBSTRING(a.item_time, 1, 4) = #{kcaYear}
+				</if>
+				<if test="kcaType != null and kcaType != ''">
+					AND LEFT(RIGHT(a.item_cd, 24),1) = #{kcaType}
+				</if>
+				<if test="kcaCount != null and kcaCount != ''">
+					AND LEFT(RIGHT(a.item_cd, 17),1) = #{kcaCount}
+				</if>
+				<if test="kcaExam != null and kcaExam != ''">
+					AND LEFT(a.item_cd,2) = #{kcaExam} 
+				</if> 
+				<if test="kcaW_P != null and kcaW_P != ''">
+					AND LEFT(RIGHT(a.item_cd, 12),1) = #{kcaW_P}
+				</if>
+				<if test="kcaArea != null and kcaArea != ''">
+					AND a.area_cd = #{kcaArea}
+				</if>
+			</when>
+			<!-- 10011 (사이버외국어대학교) -->
+			<when test="contentId == 10011">
+				<if test="cufsType != null and cufsType != ''">
+					AND item_cd = #{cufsType}
+				</if>
+				<if test="cufsCapacity != null and cufsCapacity != ''">
+					AND user_phone = #{cufsCapacity}
+				</if>
+				<if test="cufsAdmission != null and cufsAdmission != ''">
+					AND item_time = #{cufsAdmission}
+				</if>
+			</when>
+		</choose>
+
+		<!-- 공통 검색 조건 -->
+		<if test="contentId != null">
+			<if test="printCheck != null and printCheck != 0">
+				<if test="printCheck == 1">
+							AND b.min_state_cd IN ('30','40','41')
+				</if>
+				<if test="printCheck == 2">
+							AND b.min_state_cd IN ('50')
+				</if>
+			</if>
+			<if test="searchKeyword != null and searchKeyword != 'cUW/3xN4lzpUvy0c6LQEUg==' and searchKeyword != ''">
+				<if test="searchCondition == 1">
+							AND a.user_ne LIKE CONCAT('%',#{searchKeyword},'%')
+				</if>
+				<if test="searchCondition == 2">
+							AND a.user_jumin = #{searchKeyword}
+				</if>
+				<if test="searchCondition == 3">
+					<choose>
+						<when test="contentId == 10012 or contentId == 10020">
+							AND a.item_cd LIKE CONCAT('%',#{searchKeyword},'%')
+						</when>
+						<otherwise>
+							AND a.user_sno LIKE CONCAT('%',#{searchKeyword},'%')
+						</otherwise>
+					</choose>
+				</if>
+			</if>
+		</if>
+	</sql>
+
+	<!-- 전체발급내역 개수 조회 (운영 소스에서 atta_in_temp 조회 안함) -->
+	<select id="selectTotalCount" resultType="Long">
+		SELECT COUNT(*) as total_cnt FROM (
+		
+			SELECT
+					a.min_no
+			FROM 	
+					atta_in a, 
+					min_in b,
+					receive_in c,
+					giwan_in d
+		<include refid="commonWhere"></include>
+			AND 	a.giwan_no = d.giwan_no
+		<if test="searchFlag == true">
+			<include refid="searchQuery"></include>
+		</if>
+			UNION ALL
+			
+			SELECT
+					a.min_no
+			FROM 
+					atta_in_temp a
+			WHERE
+					SUBSTRING(a.reg_date,1,8) BETWEEN #{date1} AND #{date2}
+			AND 	a.content_id = #{contentId}
+			<if test="searchFlag == true">
+				<if test="printCheck == 1">
+					AND a.print_ck is null
+				</if>
+				<if test="printCheck == 2">
+					AND a.print_ck = '출력완료'
+				</if>
+				<if test="searchKeyword != ''">
+					<if test="searchCondition == 1">
+					AND a.user_ne LIKE CONCAT('%',#{searchKeyword},'%')
+					</if>
+					<if test="searchCondition == 2">
+					AND a.user_jumin = #{searchKeyword}
+					</if>
+					<if test="searchCondition == 3">
+						<choose>
+							<when test="contentId == 10012 or contentId == 10020">
+					AND a.item_cd LIKE CONCAT('%',#{searchKeyword},'%')
+							</when>
+							<otherwise>
+					AND a.user_sno LIKE CONCAT('%',#{searchKeyword},'%')
+							</otherwise>
+						</choose>
+					</if>
+				</if>
+			</if>
+		) A
+	</select>
+
+	<!-- 전체발급내역 -->
+	<select id="selectTotalHistory" resultType="HistoryVO">
+		SELECT @ROWNUM:=@ROWNUM+1 as num, b.* FROM (
+			SELECT A.* FROM(
+				SELECT
+						a.user_ne,
+						a.user_jumin,
+						a.user_sno,
+						a.min_no,
+						a.giwan_no,
+						a.item_cd,
+						d.giwan_ne,
+						a.item_time,
+						a.job_ne,
+						b.min_state_cd,
+						c.min_doc_no,
+						a.user_tpid,
+						a.user_phone,
+						a.area_cd,
+						a.reg_date
+				FROM 
+						atta_in a, 
+						min_in b,
+						receive_in c,
+						giwan_in d
+		<include refid="commonWhere"></include>
+				AND		a.giwan_no = d.giwan_no
+		<if test="searchFlag == true">
+			<include refid="searchQuery"></include>
+		</if>
+				UNION ALL
+				SELECT
+						a.user_ne,
+						a.user_jumin,
+						a.user_sno,
+						a.min_no,
+						a.giwan_no,
+						a.item_cd,
+						'인하대학교' AS giwan_ne,
+						a.item_time,
+						a.job_ne,
+						CASE WHEN (a.print_ck = '출력완료') THEN '50' ELSE '30' END AS min_state_cd,
+						a.min_no,
+						a.user_tpid,
+						a.user_phone,
+						a.area_cd,
+						a.reg_date
+				FROM 
+						atta_in_temp a
+				WHERE 
+						SUBSTRING(a.reg_date,1,8) BETWEEN #{date1} AND #{date2}
+				AND 
+						a.content_id = #{contentId}
+		<if test="searchFlag == true">
+			<if test="printCheck == 1">
+				AND a.print_ck is null
+			</if>
+			<if test="printCheck == 2">
+				AND a.print_ck = '출력완료'
+			</if>
+			<if test="searchKeyword != ''">
+				<if test="searchCondition == 1">
+				AND a.user_ne LIKE CONCAT('%',#{searchKeyword},'%')
+				</if>
+				<if test="searchCondition == 2">
+				AND a.user_jumin = #{searchKeyword} 
+				</if>
+				<if test="searchCondition == 3">
+					<choose>
+						<when test="contentId == 10012 or contentId == 10020">
+				AND a.item_cd LIKE CONCAT('%',#{searchKeyword},'%')
+						</when>
+						<otherwise>
+				AND a.user_sno LIKE CONCAT('%',#{searchKeyword},'%')
+						</otherwise>
+					</choose>
+				</if>
+			</if>
+		</if>
+		) A
+		<include refid="sort"></include>
+		) b, (SELECT @ROWNUM :=0) rownum
+		<if test="nameSort == null and codeSort == null">
+			ORDER BY num desc
+		</if>
+		<if test="excel != true">
+			limit ${firstIndex}, ${recordCountPerPage}
+		</if>
+	</select>
+
+	<!-- 전체발급내역통계 -->
+	<select id="selectStatistics" resultType="StatisticsVO">
+
+		SELECT
+		<if test="t10004 != true">
+			area_cd, 
+			area_ne,
+		</if>
+			SUM(total_cnt) AS total_cnt,
+			SUM(not_printMin_cnt) AS not_printMin_cnt,
+			SUM(printMin_cnt) AS printMin_cnt
+			FROM (
+				SELECT 
+						a.area_cd, 
+						b.area_ne,
+						CASE WHEN c.min_state_cd 
+							IN ('30','40','41','50') 
+							THEN 1 ELSE 0 
+							END AS total_cnt,
+						CASE WHEN c.min_state_cd 
+							IN ('30','40','41') 
+<!-- 							IN ('30','40') -->
+							THEN 1  ELSE 0
+							END AS not_printMin_cnt,
+						CASE WHEN c.min_state_cd 
+							IN ('50') 
+							THEN 1 ELSE 0 
+							END AS printMin_cnt
+				FROM 
+						atta_in a, 
+						area_in b, 
+						min_in c, 
+						giwan_in d, 
+						receive_in e
+				WHERE 
+						SUBSTRING(a.reg_date,1,8) BETWEEN #{date1} AND #{date2}
+				AND 	a.content_id = b.content_id
+				AND 	a.min_no = c.min_no
+				AND 	a.min_no = e.min_no
+				AND 	a.area_cd = b.area_cd
+				AND 	a.content_id = #{contentId}
+				AND 	a.giwan_no = d.giwan_no
+				AND 	a.pay_state_cd = '1'
+				AND 	a.com_cd = '10001'
+				AND 	e.receive_type = 'WEB'
+		<if test="managerCd != null and managerCd != 00 and contentId != 10013">
+				AND 	a.area_cd = #{managerCd}
+		</if>
+		<!-- UNION ALL -->
+		<!-- SELECT a.area_cd, b.area_ne, -->
+		<!-- CASE WHEN print_ck IN ('미출력','출력완료') THEN 1 -->
+		<!-- WHEN print_ck is null THEN 1 -->
+		<!-- ELSE 0 END -->
+		<!-- AS total_cnt, -->
+		<!-- CASE WHEN print_ck = '미출력' THEN 1 -->
+		<!-- WHEN print_ck is null THEN 1 -->
+		<!-- ELSE 0 END -->
+		<!-- AS not_printMin_cnt, -->
+		<!-- CASE WHEN print_ck = '출력완료' THEN 1 ELSE 0 END -->
+		<!-- AS printMin_cnt -->
+		<!-- FROM atta_in a, area_in b -->
+		<!-- #FROM atta_in_temp a, area_in b -->
+		<!-- WHERE SUBSTRING(a.reg_date,1,8) BETWEEN #{date1} AND #{date2} -->
+		<!-- #AND a.area_cd = b.area_cd -->
+		<!-- #AND a.com_cd = '10002' -->
+		<!-- AND a.content_id = #{contentId} -->
+		<!-- <if test="managerCd != null and managerCd != 00"> -->
+		<!-- AND a.area_cd = #{managerCd} -->
+		<!-- </if> -->
+		<!-- #AND A.USER_TPID = '' -->
+				UNION ALL
+				SELECT 
+					e.area_cd, 
+					b.area_ne,
+					CASE WHEN print_ck IN ('미출력','출력완료') THEN 1
+						 WHEN print_ck is null THEN 1
+						 ELSE 0 END
+						 AS total_cnt,
+					CASE WHEN print_ck = '미출력' THEN 1
+						 WHEN e.print_ck is null THEN 1
+						 ELSE 0 END
+						 AS not_printMin_cnt,
+					CASE WHEN print_ck = '출력완료' THEN 1
+						 ELSE 0 END
+						 AS printMin_cnt
+				FROM area_in b, atta_in_temp e
+				WHERE SUBSTRING(e.reg_date,1,8) BETWEEN #{date1} AND #{date2}
+		<if test="managerCd != null and managerCd != 00">
+				AND e.area_cd = #{managerCd}
+		</if>
+				AND e.area_cd = b.area_cd
+				AND e.content_id = #{contentId}
+				AND e.content_id = b.content_id
+			) A
+		<if test="t10004 != true">
+		GROUP By area_cd
+		ORDER BY area_cd ASC
+		</if>
+	</select>
+
+	<select id="selectGStatistics" resultType="GstatisticsVO">
+		SELECT 
+			a.giwan_no, 
+			giwan_ne, 
+			sum(min_cnt) as min_cnt
+		FROM (
+			SELECT 
+					a.giwan_no,
+					a.reg_date,
+					item_time,
+					1 as min_cnt,
+					d.giwan_ne
+			FROM 	
+					atta_in a, 
+<!-- 					min_in b,  -->
+<!-- 					receive_in c,  -->
+					giwan_in d
+			WHERE a.content_id = #{contentId}
+<!-- 			AND a.min_no = b.min_no -->
+<!-- 			AND a.min_no = c.min_no -->
+			AND a.giwan_no = d.giwan_no
+		<if test="managerCd != null and managerCd != 00">
+			AND a.area_cd = #{managerCd}
+		</if>
+			) a
+		<choose>
+			<when test="contentId == 10007">
+				WHERE a.item_time = #{month}	
+			</when>
+			<when test="contentId == 10009 or contentId == 10011 or contentId == 10012 or contentId == 10013 or contentId == 10014 or contentId == 10015 or contentId == 10016 or contentId == 10017 or contentId == 10018 or contentId == 10019 or contentId == 10020 or contentId == 10021">
+				WHERE SUBSTRING(reg_date, 1, 4) = #{year}	
+			</when>
+			<otherwise>
+				WHERE SUBSTRING(a.item_time, 1, 4) = #{year}
+				AND SUBSTRING(a.item_time, 5, 1) = #{month}
+			</otherwise>
+		</choose>
+		GROUP BY giwan_no
+		ORDER BY min_cnt DESC
+	</select>
+	
+	<select id="selectCertByMinNo" resultType="HistoryVO" parameterType="String">
+		select  
+			a.min_no,
+			b.min_doc_no,
+	    	a.min_state_cd
+		from min_in a, receive_in b
+	    where a.min_no = b.min_no
+	    and   b.min_no = #{min_no}
+	</select>
+	
+	<update id="updateReissue">
+		UPDATE RECEIVE_IN                           
+		   SET RECEIVE_TPID   = '',        
+		       RECEIVE_DATE   = '',        
+		       RECEIVE_SYS_IP = '',        
+		       RECEIVE_PRINTER_MODEL = '', 
+		       RECEIVE_TARGET = '',        
+		       RECEIVE_PAS = '',           
+		       RECEIVE_TYPE = 'WEB'      
+		 WHERE MIN_DOC_NO = #{min_doc_no}
+	</update>
+	
+	<update id="updateCnt">
+		 UPDATE MIN_IN                                            
+		 SET RECEIVED_CNT = '0'    							
+		 WHERE MIN_NO   = #{min_no}            
+	</update>
+	
+</mapper>
+

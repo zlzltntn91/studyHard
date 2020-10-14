@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+                                 http://www.springframework.org/schema/beans/spring-beans.xsd
+                                 http://www.springframework.org/schema/security
+                                 http://www.springframework.org/schema/security/spring-security.xsd">
+<!-- 	시큐리티를 적용하지 않는 경로 -->
+	<http pattern="/att1.0/css/*.css" security="none" />
+	<http pattern="/**.jsp" security="none" />
+	<http pattern="/att1.0/js/*.js" security="none" />
+	<http pattern="/att1.0/image/**" security="none" />
+	<http pattern="/att1.0/images/**" security="none" />
+	<http pattern="/wm1.0/**" security="none" />
+	<http pattern="/error" security="none" />
+	<http pattern="/favicon.ico" security="none" />
+	<http pattern="/attachAdmin/edu/sendDoc" security="none"/>
+	<http pattern="/attachAdmin/edu/sendFile" security="none"/>
+	<http pattern="/attachAdmin/edu/printComplete" security="none"/>
+	
+<!-- 	경로별 접근 권한 설정  -->
+	<http auto-config="true" use-expressions="true">
+	
+		<intercept-url pattern="/attachAdmin/master" access="hasRole('ROLE_ADMIN')" />
+		<intercept-url pattern="/attachAdmin/user" access="permitAll" />
+		<intercept-url pattern="/attachAdmin/user/login" access="permitAll" />
+		<intercept-url pattern="/attachAdmin/user/logout" access="permitAll" />
+		<intercept-url pattern="/attachAdmin/user/session" access="permitAll" />
+		<intercept-url pattern="/attachAdmin/user/modify" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')" />
+		<intercept-url pattern="/attachAdmin/user/modify/action" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')" />
+		<intercept-url pattern="/attachAdmin/edu/**" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')" />
+		<intercept-url pattern="/attachAdmin/career/**" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')" />
+		<intercept-url pattern="/**" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')" />
+
+		<form-login 
+			login-page="/attachAdmin/user"
+			login-processing-url="/attachAdmin/user/login"
+			authentication-success-handler-ref="successHandler"
+			authentication-failure-handler-ref="failerHandler"
+			username-parameter="username"
+			password-parameter="password" 
+		/>
+		
+<!-- 		<csrf disabled="true"/> -->
+		
+		<logout 
+			logout-url="/attachAdmin/user/logout-success"
+			success-handler-ref="logoutSuccessHandler"
+			invalidate-session="true"
+		/>
+		
+		<access-denied-handler error-page="/404.jsp"/>
+		
+<!-- 			동시접속  (마스터관리자 때문에 max-sessions = 2 로 세팅)-->
+		<session-management invalid-session-url="/attachAdmin/user">
+		 <concurrency-control max-sessions="1" expired-url="/attachAdmin/user" />		 
+		</session-management>
+	</http>
+	
+<!-- 	 // Custom Beans -->
+	<beans:bean id="failerHandler" class="kr.co.dzone.attachAdmin.user.customHandler.FailureHandler">
+		<beans:property name="failureTargetUrl" value="/attachAdmin/user/fail"/>
+	</beans:bean>
+	<beans:bean id="successHandler" class="kr.co.dzone.attachAdmin.user.customHandler.SuccessHandler">
+		<beans:property name="defaultTargetUrl" value="/attachAdmin/user/login-success"></beans:property>
+	</beans:bean>
+	<beans:bean id="logoutSuccessHandler" class="kr.co.dzone.attachAdmin.user.customHandler.LogoutHandler">
+	</beans:bean>
+	<beans:bean id="AriaPasswordEncoder" class="kr.co.dzone.attachAdmin.user.customHandler.AriaPasswordEncoder">
+	</beans:bean>
+<!-- 	Custom Beans //-->
+
+	<authentication-manager>
+		<authentication-provider>
+<!-- 		Aria 사용시 -->
+            <password-encoder ref="AriaPasswordEncoder"></password-encoder>
+            
+<!--             bcrypt 사용시  -->
+<!--             <password-encoder ref="" hash="bcrypt"></password-encoder> -->
+
+<!-- 		기존 DB 이용 -->
+<!-- 		마스터 관리자의 manager_cd는 'dz' 여야  ROLE_ADMIN을 받을 수 있음-->
+            <jdbc-user-service data-source-ref="dataSource"
+				users-by-username-query="
+										SELECT 
+												manager_id AS username, 
+												manager_pw AS password, 
+												1 AS enabled 
+										FROM 	manager_in 
+										WHERE	manager_id=?"
+				authorities-by-username-query="
+												SELECT 
+														manager_id as username, 
+							 							case when manager_cd='dz' 
+							 							then 'ROLE_ADMIN' 
+							 							else 'ROLE_USER' 
+							 							END atuhority 
+						 						FROM 	manager_in 
+				 								WHERE 	manager_id=?" />
+				 								
+		</authentication-provider>		
+	</authentication-manager>
+</beans:beans>

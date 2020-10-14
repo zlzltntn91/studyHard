@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.dzone.attachAdmin.career.mapper.CareerMapper">
+
+<sql id="searchQuery">
+	<if test = "(searchCondition != null and searchKeyword != null) or (searchKeyword != null and searchKeyword != '') or examCheck != null or statusCheck != null">
+		<if test="examCheck != 0">
+			<choose>
+				<when test="examCheck == 111">
+					and a.item_time like concat('%', #{examCheck}, '%')
+				</when>
+				<when test="examCheck == 120">
+					and a.item_time like concat('%', #{examCheck}, '%')
+				</when>
+				<when test="examCheck == 130">
+					and a.item_time like concat('%', #{examCheck}, '%')
+				</when>
+			</choose>
+		</if>
+		<if test="statusCheck != 0">
+			<choose>
+				<when test="statusCheck == 1">
+					and a.print_ck = 'Y'
+				</when>
+				<when test="statusCheck == 2">
+					and a.print_ck = 'F'
+				</when>
+				<when test="statusCheck == 3">
+					and a.print_ck = 'E'
+				</when>
+			</choose>
+		</if>
+		<if test="searchCondition != null and searchKeyword != null">
+			<choose>
+				<when test="searchCondition == 1">
+					and a.user_ne like concat('%', #{searchKeyword}, '%')
+				</when>
+				<when test="searchCondition == 2">
+					and d.com_name like concat('%', #{searchKeyword}, '%')
+				</when>
+				<when test="searchCondition == 3">
+					and a.user_sno like concat('%', #{searchKeyword}, '%')
+				</when>
+			</choose>
+		</if>
+	</if>
+</sql>
+
+<select id="selectCareer" resultType="CareerVO">
+	select @ROWNUM:= @ROWNUM+1 as num, a.* from (
+		select 
+				a.user_ne,
+				a.user_jumin,
+				a.user_sno,
+				a.min_no,
+				a.giwan_no,
+				a.item_cd,
+				d.com_name,
+				a.item_time,
+				a.job_ne,
+				b.min_state_cd,
+				b.ret_reason,
+				a.user_tpid,
+				a.user_phone,
+				a.area_cd,
+				a.print_ck,
+				a.reg_date
+		from 	atta_in a, 
+				ictdb_ems_hrd.min_in b, 
+				ictdb_ems_hrd.hrd_company_in d
+		where 	substring(a.reg_date,1,8) between #{date1} and #{date2}
+		and		a.min_no = b.min_no
+		and 	b.jubsu_cd = d.jubsu_cd
+		and 	a.content_id = '40001'
+		and 	a.print_ck not in ('A','T')
+		and 	a.pay_state_cd = '1'
+	<if test="managerCd != 0">
+		and 	a.area_cd = #{managerCd}
+	</if>
+	<if test="searchFlag != null and searchFlag == true">
+		<include refid="searchQuery"></include>
+	</if>
+	)a, (select @ROWNUM := 0) rownum
+	order by a.reg_date desc
+	limit ${firstIndex}, ${recordCountPerPage}
+</select>
+
+<select id="selectTotalCount" resultType="int">
+	select count(a.user_ne) from (
+		select 
+				a.user_ne
+		from 	atta_in a, 
+				ictdb_ems_hrd.min_in b, 
+				ictdb_ems_hrd.hrd_company_in d
+		where 	substring(a.reg_date,1,8) between #{date1} and #{date2}
+		and		a.min_no = b.min_no
+		and 	b.jubsu_cd = d.jubsu_cd
+		and 	a.content_id = '40001'
+		and 	a.print_ck not in ('A','T')
+		and 	a.pay_state_cd = '1'
+	<if test="managerCd != 0">
+		and 	a.area_cd = #{managerCd}
+	</if>
+	<if test="searchFlag != null and searchFlag == true">
+		<include refid="searchQuery"></include>
+	</if>
+	)a
+</select>
+
+<select id="selectCareerSettingTotal" resultType="CareerSettingVO">
+	SELECT	
+			idx,
+			content_id, 
+			class as vClass, 
+			year, 
+			time, 
+			user_limit_date, 
+			start_date, 
+			com_limit_date, 
+			reg_date, 
+			item_time, 
+			del_yn		
+	FROM	career_term_in
+	WHERE	del_yn = 'N'		
+	<if test="date1 != null and date1 != ''">
+		AND year = #{date1}
+	</if>
+	<if test="examCheck != null and examCheck != 0">
+		AND class = #{examCheck}
+	</if>
+	ORDER BY year asc
+</select>
+
+<update id="updatePrintCk" parameterType="String" >
+	UPDATE ATTA_IN SET PRINT_CK = 'F' WHERE MIN_NO = #{min_no}	
+</update>
+
+<update id="updateDelYN" parameterType="String" >
+	UPDATE CAREER_TERM_IN SET DEL_YN = 'Y' WHERE IDX = #{idx}	
+</update>
+
+<update id="updateDates" parameterType="CareerSettingVO">
+	UPDATE CAREER_TERM_IN 
+	SET	
+		START_DATE 		= #{start_date},
+		USER_LIMIT_DATE = #{user_limit_date},
+		COM_LIMIT_DATE 	= #{com_limit_date}
+	WHERE
+		IDX = #{idx}
+</update>
+
+
+<insert id="insertSetting" parameterType="CareerSettingVO">
+	INSERT INTO CAREER_TERM_IN																				
+			(	
+				CONTENT_ID,
+				CLASS,
+				YEAR,						
+				TIME,							
+				USER_LIMIT_DATE,
+				START_DATE,
+				COM_LIMIT_DATE,
+				REG_DATE,		
+				ITEM_TIME
+			)																						
+	VALUES	(	
+				'40001',
+				#{vClass},
+				#{year},
+				#{time},	
+				#{user_limit_date},
+				#{start_date},
+				#{com_limit_date},
+				#{reg_date},	
+				#{item_time}
+			)																				
+</insert>
+</mapper>
